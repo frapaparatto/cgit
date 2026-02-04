@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include <zlib.h>
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // Disable output buffering
   setbuf(stdout, NULL);
   setbuf(stderr, NULL);
@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  const char *command = argv[1];
+  const char* command = argv[1];
 
   if (strcmp(command, "init") == 0) {
     if (mkdir(".git", 0755) == -1 || mkdir(".git/objects", 0755) == -1 ||
@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    FILE *headFile = fopen(".git/HEAD", "w");
+    FILE* headFile = fopen(".git/HEAD", "w");
     if (headFile == NULL) {
       fprintf(stderr, "Failed to create .git/HEAD file: %s\n", strerror(errno));
       return 1;
@@ -46,8 +46,8 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    const char *option = argv[2];
-    const char *object = argv[3];
+    const char* option = argv[2];
+    const char* object = argv[3];
 
     if (strcmp(option, "-t") != 0 && strcmp(option, "-p") != 0 &&
         strcmp(option, "-s") != 0) {
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
     snprintf(path, sizeof(path), ".git/objects/%s/%s", dir, file);
 
     // Read compressed object file into memory
-    FILE *objectFile = fopen(path, "rb");
+    FILE* objectFile = fopen(path, "rb");
     if (objectFile == NULL) {
       fprintf(stderr, "error: cannot read object '%s': %s\n", object,
               strerror(errno));
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
     rewind(objectFile);
 
     size_t fileLen = (size_t)endpos;
-    unsigned char *buffer = (unsigned char *)malloc(fileLen);
+    unsigned char* buffer = (unsigned char*)malloc(fileLen);
     if (!buffer) {
       fprintf(stderr, "out of memory\n");
       fclose(objectFile);
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
 
     size_t acc_cap = 8192;
     size_t acc_len = 0;
-    unsigned char *acc_buff = (unsigned char *)malloc(acc_cap);
+    unsigned char* acc_buff = (unsigned char*)malloc(acc_cap);
     if (!acc_buff) {
       fprintf(stderr, "out of memory\n");
       free(buffer);
@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
 
     z_stream strm;
     memset(&strm, 0, sizeof(strm));
-    strm.next_in = (Bytef *)buffer;
+    strm.next_in = (Bytef*)buffer;
     strm.avail_in = (uInt)fileLen;
 
     int zret = inflateInit(&strm);
@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
 
     for (;;) {
       // Reset output window every iteration
-      strm.next_out = (Bytef *)tmp;
+      strm.next_out = (Bytef*)tmp;
       strm.avail_out = (uInt)sizeof(tmp);
 
       zret = inflate(&strm, Z_NO_FLUSH);
@@ -175,10 +175,9 @@ int main(int argc, char *argv[]) {
       if (produced > 0) {
         if (acc_len + produced > acc_cap) {
           size_t new_cap = acc_cap;
-          while (new_cap < acc_len + produced)
-            new_cap *= 2;
+          while (new_cap < acc_len + produced) new_cap *= 2;
 
-          unsigned char *p = (unsigned char *)realloc(acc_buff, new_cap);
+          unsigned char* p = (unsigned char*)realloc(acc_buff, new_cap);
           if (!p) {
             fprintf(stderr, "out of memory\n");
             inflateEnd(&strm);
@@ -194,28 +193,26 @@ int main(int argc, char *argv[]) {
         acc_len += produced;
       }
 
-      if (zret == Z_STREAM_END)
-        break;
+      if (zret == Z_STREAM_END) break;
     }
 
     inflateEnd(&strm);
-    free(buffer); // compressed bytes no longer needed
+    free(buffer);  // compressed bytes no longer needed
 
     // Parse decompressed header: "<type> <size>\0<payload>"
     // Find space
     size_t i = 0;
-    while (i < acc_len && acc_buff[i] != ' ')
-      i++;
+    while (i < acc_len && acc_buff[i] != ' ') i++;
     if (i == acc_len) {
       fprintf(stderr, "error: invalid object header (no space)\n");
       free(acc_buff);
       return 1;
     }
-    const char *type = (const char *)acc_buff;
+    const char* type = (const char*)acc_buff;
     size_t type_len = i;
 
     // Parse decimal size until NUL
-    i++; // skip space
+    i++;  // skip space
     if (i >= acc_len) {
       fprintf(stderr, "error: invalid object header\n");
       free(acc_buff);
@@ -248,14 +245,14 @@ int main(int argc, char *argv[]) {
     }
 
     // Payload begins after NUL
-    i++; // skip NUL
+    i++;  // skip NUL
     if (i > acc_len) {
       fprintf(stderr, "error: invalid object header\n");
       free(acc_buff);
       return 1;
     }
 
-    const unsigned char *payload = acc_buff + i;
+    const unsigned char* payload = acc_buff + i;
     size_t payload_len = acc_len - i;
 
     // Optional strict check: payload_len must equal declared size
@@ -279,10 +276,10 @@ int main(int argc, char *argv[]) {
   }
 
   else if (strcmp(command, "hash-object") == 0) {
-    FILE *file_content = NULL;
-    unsigned char *header_buffer = NULL;
-    unsigned char *acc_buff = NULL;
-    FILE *compressed_file = NULL;
+    FILE* file_content = NULL;
+    unsigned char* header_buffer = NULL;
+    unsigned char* acc_buff = NULL;
+    FILE* compressed_file = NULL;
 
     if (argc < 4) {
       /* TODO: include the possibility to write the command without the -w
@@ -291,8 +288,8 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    const char *option = argv[2];
-    const char *filename = argv[3];
+    const char* option = argv[2];
+    const char* filename = argv[3];
 
     if (strcmp(option, "-w") != 0) {
       fprintf(stderr, "invalid option: '%s': (-w)\n", option);
@@ -303,7 +300,7 @@ int main(int argc, char *argv[]) {
      *
      * TODO: include other types of data (like tree)
      * */
-    char *type = "blob";
+    char* type = "blob";
 
     /* Now I have to compute the size of the file */
     struct stat st;
@@ -340,7 +337,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Write header with null terminator
-    snprintf((char *)header_buffer, header_len + 1, "%s %zu", type, file_size);
+    snprintf((char*)header_buffer, header_len + 1, "%s %zu", type, file_size);
     // Read file content immediately after the null terminator
     size_t byte_read =
 
@@ -367,7 +364,7 @@ int main(int argc, char *argv[]) {
     size_t acc_cap = 8192;
     size_t acc_len = 0;
 
-    acc_buff = (unsigned char *)malloc(acc_cap);
+    acc_buff = (unsigned char*)malloc(acc_cap);
     if (!acc_buff) {
       fprintf(stderr, "failed to allocate memory\n");
       goto err;
@@ -376,7 +373,7 @@ int main(int argc, char *argv[]) {
     z_stream strm;
     memset(&strm, 0, sizeof(strm));
 
-    strm.next_in = (Bytef *)header_buffer;
+    strm.next_in = (Bytef*)header_buffer;
     strm.avail_in = (uInt)total_size;
 
     int ret = deflateInit(&strm, Z_DEFAULT_COMPRESSION);
@@ -411,7 +408,7 @@ int main(int argc, char *argv[]) {
             new_cap *= 2;
           }
 
-          unsigned char *tmp_acc = (unsigned char *)realloc(acc_buff, new_cap);
+          unsigned char* tmp_acc = (unsigned char*)realloc(acc_buff, new_cap);
 
           if (!tmp_acc) {
             fprintf(stderr, "error: %s\n", strerror(errno));
@@ -463,14 +460,10 @@ int main(int argc, char *argv[]) {
     goto cleanup;
 
   err:
-    if (header_buffer)
-      free(header_buffer);
-    if (file_content)
-      fclose(file_content);
-    if (acc_buff)
-      free(acc_buff);
-    if (compressed_file)
-      fclose(compressed_file);
+    if (header_buffer) free(header_buffer);
+    if (file_content) fclose(file_content);
+    if (acc_buff) free(acc_buff);
+    if (compressed_file) fclose(compressed_file);
     return 1;
 
   cleanup:
