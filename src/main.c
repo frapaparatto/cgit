@@ -15,34 +15,35 @@ int main(int argc, char *argv[]) {
   setbuf(stderr, NULL);
 
   if (argc < 2) {
-    fprintf(stderr, "Usage: ./your_program.sh <command> [<args>]\n");
+    fprintf(stderr, "Usage: ./.cgit <command> [<args>]\n");
     return 1;
   }
 
   const char *command = argv[1];
 
   if (strcmp(command, "init") == 0) {
-    if (mkdir(".git", 0755) == -1 || mkdir(".git/objects", 0755) == -1 ||
-        mkdir(".git/refs", 0755) == -1) {
+    if (mkdir(".cgit", 0755) == -1 || mkdir(".cgit/objects", 0755) == -1 ||
+        mkdir(".cgit/refs", 0755) == -1) {
       fprintf(stderr, "Failed to create directories: %s\n", strerror(errno));
       return 1;
     }
 
-    FILE *headFile = fopen(".git/HEAD", "w");
+    FILE *headFile = fopen(".cgit/HEAD", "w");
     if (headFile == NULL) {
-      fprintf(stderr, "Failed to create .git/HEAD file: %s\n", strerror(errno));
+      fprintf(stderr, "Failed to create .cgit/HEAD file: %s\n",
+              strerror(errno));
       return 1;
     }
     fprintf(headFile, "ref: refs/heads/main\n");
     fclose(headFile);
 
-    printf("Initialized git directory\n");
+    printf("Initialized.cgit directory\n");
     return 0;
   }
 
   else if (strcmp(command, "cat-file") == 0) {
     if (argc < 4) {
-      fprintf(stderr, "usage: git cat-file (-p | -t | -s) <object>\n");
+      fprintf(stderr, "usage:.cgit cat-file (-p | -t | -s) <object>\n");
       return 1;
     }
 
@@ -74,7 +75,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    // Build .git/objects/aa/bbbbb...
+    // Build .cgit/objects/aa/bbbbb...
     char dir[3];
     char file[39];
     memcpy(dir, object, 2);
@@ -83,7 +84,7 @@ int main(int argc, char *argv[]) {
     file[38] = '\0';
 
     char path[256];
-    snprintf(path, sizeof(path), ".git/objects/%s/%s", dir, file);
+    snprintf(path, sizeof(path), ".cgit/objects/%s/%s", dir, file);
 
     // Read compressed object file into memory
     FILE *objectFile = fopen(path, "rb");
@@ -284,7 +285,7 @@ int main(int argc, char *argv[]) {
     if (argc < 4) {
       /* TODO: include the possibility to write the command without the -w
        * option */
-      fprintf(stderr, "usage: git hash-object [-w] <file>\n");
+      fprintf(stderr, "usage:.cgit hash-object [-w] <file>\n");
       return 1;
     }
 
@@ -431,7 +432,8 @@ int main(int argc, char *argv[]) {
      * and directory */
 
     char path[256];
-    snprintf(path, sizeof(path), ".git/objects/%c%c", hex_hash[0], hex_hash[1]);
+    snprintf(path, sizeof(path), ".cgit/objects/%c%c", hex_hash[0],
+             hex_hash[1]);
 
     if (mkdir(path, 0755) == -1) {
       if (errno != EEXIST) {
@@ -441,7 +443,7 @@ int main(int argc, char *argv[]) {
     }
 
     char full_path[256];
-    snprintf(full_path, sizeof(full_path), ".git/objects/%.2s/%s", hex_hash,
+    snprintf(full_path, sizeof(full_path), ".cgit/objects/%.2s/%s", hex_hash,
              hex_hash + 2);
 
     compressed_file = fopen(full_path, "wb");
