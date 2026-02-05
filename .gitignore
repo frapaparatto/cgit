@@ -75,3 +75,6 @@ vcpkg_installed/
 docs/html/
 docs/latex/
 *.pdf
+
+refactoring.md
+
