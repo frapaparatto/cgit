@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)  # VERSION 4.2 doesn't exist yet!
+cmake_minimum_required(VERSION 4.2)
 
 project(cgit LANGUAGES C)
 
