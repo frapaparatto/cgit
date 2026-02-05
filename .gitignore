@@ -76,5 +76,5 @@ docs/html/
 docs/latex/
 *.pdf
 
-refactoring.md
+refactoring/
 
