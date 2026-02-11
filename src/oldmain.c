@@ -21,27 +21,7 @@ int main(int argc, char *argv[]) {
 
   const char *command = argv[1];
 
-  if (strcmp(command, "init") == 0) {
-    if (mkdir(".cgit", 0755) == -1 || mkdir(".cgit/objects", 0755) == -1 ||
-        mkdir(".cgit/refs", 0755) == -1) {
-      fprintf(stderr, "Failed to create directories: %s\n", strerror(errno));
-      return 1;
-    }
-
-    FILE *headFile = fopen(".cgit/HEAD", "w");
-    if (headFile == NULL) {
-      fprintf(stderr, "Failed to create .cgit/HEAD file: %s\n",
-              strerror(errno));
-      return 1;
-    }
-    fprintf(headFile, "ref: refs/heads/main\n");
-    fclose(headFile);
-
-    printf("Initialized.cgit directory\n");
-    return 0;
-  }
-
-  else if (strcmp(command, "cat-file") == 0) {
+  if (strcmp(command, "cat-file") == 0) {
     if (argc < 4) {
       fprintf(stderr, "usage:.cgit cat-file (-p | -t | -s) <object>\n");
       return 1;

@@ -9,7 +9,7 @@
 static int ensure_dir(const char *path) {
   if (mkdir(path, 0755) == -1 && errno != EEXIST) {
     fprintf(stderr, "Failed to create %s: %s\n", path, strerror(errno));
-    return -1;
+    return 1;
   }
   return 0;
 }
