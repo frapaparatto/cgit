@@ -15,5 +15,7 @@ find_package(ZLIB REQUIRED)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/include)
+
 target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto)
 target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)
