@@ -11,7 +11,8 @@ typedef struct {
 
 static const command_t commands[] = {
     {"init", handle_init, "cgit init"},
-    {"cat-file", handle_cat_file, "cgit cat-file <type> <object>"},
+    {"cat-file", handle_cat_file,
+     "cgit cat-file <type | (-p | -t | -e | -s)> <object>"},
     {"hash-object", handle_hash_object, "cgit hash-object [-w] <file>"},
     {NULL, NULL, NULL}};
 
