@@ -23,6 +23,7 @@ int handle_hash_object(int argc, char *argv[]) {
   int persist = 0; /* Since -w is optional, the default is to avoid writing */
   char *f;
   char hash_out[CGIT_HASH_HEX_LEN + 1];
+  char *type = CGIT_DEFAULT_OBJ_TYPE;
   buffer_t buf = {0};
 
   if (argc < 2) {
@@ -73,7 +74,7 @@ int handle_hash_object(int argc, char *argv[]) {
   }
 
   cgit_error_t err_write =
-      write_object(buf.data, buf.size, "blob", hash_out, persist);
+      write_object(buf.data, buf.size, type, hash_out, persist);
 
   if (err_write != CGIT_OK) {
     fprintf(stderr, "Failed to create the object\n");

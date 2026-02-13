@@ -23,6 +23,11 @@ typedef enum {
 #define CGIT_READ_BUFFER_SIZE 8192
 #define CGIT_MAX_PATH_LENGTH 256
 
+/* Macro I added */
+#define CGIT_DIR_BUF_SIZE 3
+#define CGIT_OBJ_NAME_BUF_SIZE 39
+#define CGIT_DEFAULT_OBJ_TYPE "blob"
+
 typedef struct {
   unsigned char *data;
   size_t size;

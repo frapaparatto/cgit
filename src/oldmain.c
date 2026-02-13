@@ -22,38 +22,8 @@ int main(int argc, char *argv[]) {
   const char *command = argv[1];
 
   if (strcmp(command, "cat-file") == 0) {
-    if (argc < 4) {
-      fprintf(stderr, "usage:.cgit cat-file (-p | -t | -s) <object>\n");
-      return 1;
-    }
-
     const char *option = argv[2];
     const char *object = argv[3];
-
-    if (strcmp(option, "-t") != 0 && strcmp(option, "-p") != 0 &&
-        strcmp(option, "-s") != 0) {
-      fprintf(stderr, "invalid option '%s': (-p | -t | -s)\n", option);
-      return 1;
-    }
-
-    // Validate object id (40 hex chars)
-    size_t objlen = strlen(object);
-    if (objlen != 40) {
-      fprintf(stderr,
-              "error: invalid object name '%s': expected 40 hexadecimal "
-              "characters\n",
-              object);
-      return 1;
-    }
-
-    for (size_t i = 0; i < 40; i++) {
-      if (!isxdigit((unsigned char)object[i])) {
-        fprintf(stderr,
-                "error: invalid object name '%s': non-hexadecimal character\n",
-                object);
-        return 1;
-      }
-    }
 
     // Build .cgit/objects/aa/bbbbb...
     char dir[3];
