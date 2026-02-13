@@ -7,7 +7,7 @@
 #include "../include/common.h"
 
 static int ensure_dir(const char *path) {
-  if (mkdir(path, 0755) == -1 && errno != EEXIST) {
+  if (mkdir(path, 0755) != 0 && errno != EEXIST) {
     fprintf(stderr, "Failed to create %s: %s\n", path, strerror(errno));
     return 1;
   }
@@ -26,7 +26,7 @@ int handle_init(int argc, char *argv[]) {
     }
   }
 
-  if (ensure_dir(CGIT_OBJECTS_DIR) == -1 || ensure_dir(CGIT_REFS_DIR) == -1)
+  if (ensure_dir(CGIT_OBJECTS_DIR) != 0 || ensure_dir(CGIT_REFS_DIR) != 0)
     return 1;
 
   if (!reinit) {

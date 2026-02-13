@@ -10,8 +10,10 @@ typedef struct {
 } git_object_t;
 
 cgit_error_t read_object(const char *hash, git_object_t *obj);
+/* TODO: evaluate what is the cleanest way to write the persist parameter in
+ * terms of type used (bool, int) or maybe creating an enum... */
 cgit_error_t write_object(const unsigned char *data, size_t len,
-                          const char *type, char *hash_out);
+                          const char *type, char *hash_out, int persist);
 void free_object(git_object_t *obj);
 
 cgit_error_t compress_data(const unsigned char *input, size_t input_len,

@@ -52,8 +52,14 @@ int handle_cat_file(int argc, char *argv[]) {
    * - FORM A: cgit cat-file <type> <object>
    * - FORM B: cgit cat-file <option> <object>
    */
-  if (argv[1][0] == '-' && argv[1][1] != '\0' && argv[1][2] == '\0')
+  if (argv[1][0] == '-' && argv[1][1] != '\0' && argv[1][2] == '\0') {
     opt = argv[1][1];
+
+    if (opt != 'p' && opt != 't' && opt != 's' && opt != 'e') {
+      fprintf(stderr, "Invalid option '-%c' (-t | -s | -e | -p)\n", opt);
+      goto cleanup;
+    }
+  }
 
   if (!opt) exp_type = argv[1];
   obj_hash = argv[2];
@@ -62,10 +68,6 @@ int handle_cat_file(int argc, char *argv[]) {
    * - adjust the -e flag: right now it does too much, it only has to check if
    * an object exists so I should only use build_object_path and is_valid_hash,
    * nothing more
-   * - I have to check if opt is a valid option before calling read object,
-   * right now if is not a valid option it does the job anyway, and only when I
-   * call cmd_cat_file is it defined as an invalid option.
-   *  - I should also handle with a proper error message
    * */
   cgit_error_t err = read_object(obj_hash, &obj);
   if (err != CGIT_OK) {
