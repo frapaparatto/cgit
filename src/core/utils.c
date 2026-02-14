@@ -9,12 +9,6 @@
 
 cgit_error_t build_object_path(const char *hash, char *path_out,
                                size_t path_size) {
-  /* This function is not responsible for validating hash or other things, this
-   * is responsabilities of the caller */
-
-  /* Since path_out and path_size are passed to the function, I assume they've
-   * already declared with some macros*/
-
   char dir[CGIT_DIR_BUF_SIZE];
   char object[CGIT_OBJ_NAME_BUF_SIZE];
 
@@ -35,14 +29,16 @@ cgit_error_t build_object_path(const char *hash, char *path_out,
   return CGIT_OK;
 }
 
-int is_valid_hash(const char *hash) {
+cgit_error_t is_valid_hash(const char *hash) {
+  cgit_error_t result = CGIT_OK;
   size_t objlen = strlen(hash);
+
   if (objlen != CGIT_HASH_HEX_LEN) {
     fprintf(stderr,
             "error: invalid hash name '%s': expected 40 hexadecimal "
             "characters\n",
             hash);
-    return 1;
+    result = CGIT_ERROR_INVALID_ARGS;
   }
 
   for (size_t i = 0; i < CGIT_HASH_HEX_LEN; i++) {
@@ -50,10 +46,10 @@ int is_valid_hash(const char *hash) {
       fprintf(stderr,
               "error: invalid hash name '%s': non-hexadecimal character\n",
               hash);
-      return 1;
+      result = CGIT_ERROR_INVALID_ARGS;
     }
   }
-  return 0;
+  return result;
 }
 
 void buffer_free(buffer_t *buf) {

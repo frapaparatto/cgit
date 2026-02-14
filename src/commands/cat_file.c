@@ -69,6 +69,7 @@ int handle_cat_file(int argc, char *argv[]) {
    * an object exists so I should only use build_object_path and is_valid_hash,
    * nothing more
    * */
+
   cgit_error_t err = read_object(obj_hash, &obj);
   if (err != CGIT_OK) {
     fprintf(stderr, "Failed to read object %s\n", obj_hash);
