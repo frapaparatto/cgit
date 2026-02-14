@@ -1,35 +1,30 @@
-#include <CommonCrypto/CommonCrypto.h>
+/*
+ * SHA-1 hashing using openssl/sha.h.
+ *
+ * SHA1() is deprecated in OpenSSL 3.x in favor of the EVP API
+ * (EVP_DigestInit_ex / EVP_DigestUpdate / EVP_DigestFinal_ex).
+ * We use SHA1() here for simplicity — if OpenSSL ever removes it,
+ * migrate to the EVP interface.
+ */
+
+#include <openssl/sha.h>
+#include <stdio.h>
 
 #include "../include/core.h"
 
 cgit_error_t compute_sha1(const unsigned char *data, size_t len,
                           char *hex_out) {
-  /*
-   *
-   * This function should calculate the sha1 value
-   *
-   * First let's recap the process to calculate the sha_1 value
-   *
-   * Level: 1 (core) so basically I can't use functions of levels above, I can
-   * use only fuction within the same level
-   *
-   * In this case to compute the sha1 I need the header <type> <size>\0<content>
-   *
-   * I imagine *hex_out to be a pointer to the hexadecimal buffer where I will
-   * store the output
-   *
-   * This hexadecimal value (computation) is needed only for the cat-file
-   * command so basically I think that I should initialize it in the
-   * handle_hash_object function
-   *
-   * write object function should create the header
-   *
-   * arguments
-   * - data = header + data
-   * - len = full_len (total_size)
-   * - hex_out = the hex_out buffer
-   *
-   */
+  unsigned char hash[SHA_DIGEST_LENGTH];
+
+  if (!SHA1(data, len, hash)) {
+    return 1;
+  }
+
+  for (size_t i = 0; i < SHA_DIGEST_LENGTH; i++) {
+    sprintf(hex_out + 2 * i, "%02x", hash[i]);
+  }
+
+  hex_out[CGIT_HASH_HEX_LEN] = '\0';
 
   return 0;
 }
