@@ -1,5 +1,4 @@
-
-# Decompression and `git cat-file` — solid mental model
+# Decompression and `git cat-file` 
 
 ## Why decompression exists (goal)
 The goal of decompression is to reconstruct the **original data representation** from a compressed form, so the information contained in the data becomes usable and readable again.
