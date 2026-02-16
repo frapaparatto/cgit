@@ -9,6 +9,10 @@ typedef struct {
   unsigned char *data;
 } git_object_t;
 
+cgit_error_t parse_object_header(const unsigned char *buf, size_t buf_len,
+                                 char *type, size_t type_len,
+                                 size_t *content_size, size_t *payload_offset);
+
 cgit_error_t read_object(const char *hash, git_object_t *obj);
 /* TODO: evaluate what is the cleanest way to write the persist parameter in
  * terms of type used (bool, int) or maybe creating an enum... */

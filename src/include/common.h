@@ -27,6 +27,7 @@ typedef enum {
 #define CGIT_DIR_BUF_SIZE 3
 #define CGIT_OBJ_NAME_BUF_SIZE 39
 #define CGIT_DEFAULT_OBJ_TYPE "blob"
+#define CGIT_MAX_TYPE_LEN 16
 
 typedef struct {
   unsigned char *data;

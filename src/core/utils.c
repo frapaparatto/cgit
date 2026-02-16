@@ -60,6 +60,66 @@ void buffer_free(buffer_t *buf) {
   buf->capacity = 0;
 }
 
+cgit_error_t parse_object_header(const unsigned char *buf, size_t buf_len,
+                                 char *type, size_t type_len,
+                                 size_t *content_size,
+                                 size_t *payload_offset) {
+  /* Parse type: scan until space separator */
+  size_t i = 0;
+  while (i < buf_len && buf[i] != ' ') i++;
+  if (i >= buf_len) {
+    fprintf(stderr, "error: invalid object header (no space after type)\n");
+    return CGIT_ERROR_INVALID_OBJECT;
+  }
+
+  if (i + 1 > type_len) {
+    fprintf(stderr, "error: object type too long\n");
+    return CGIT_ERROR_INVALID_OBJECT;
+  }
+  memcpy(type, buf, i);
+  type[i] = '\0';
+
+  /* Parse decimal size until NUL */
+  i++; /* Skip space */
+  if (i >= buf_len) {
+    fprintf(stderr, "error: invalid object header (truncated after type)\n");
+    return CGIT_ERROR_INVALID_OBJECT;
+  }
+
+  size_t size_val = 0;
+  int saw_digit = 0;
+
+  while (i < buf_len && buf[i] != '\0') {
+    unsigned char c = buf[i];
+
+    if (c < '0' || c > '9') {
+      fprintf(stderr, "error: invalid object header (bad size)\n");
+      return CGIT_ERROR_INVALID_OBJECT;
+    }
+    saw_digit = 1;
+    size_t digit = (size_t)(c - '0');
+    if (size_val > (SIZE_MAX - digit) / 10) {
+      fprintf(stderr, "error: object size too large to represent\n");
+      return CGIT_ERROR_INVALID_OBJECT;
+    }
+
+    size_val = size_val * 10 + digit;
+    i++;
+  }
+
+  if (!saw_digit || i == buf_len) {
+    fprintf(stderr, "error: invalid object header (no NUL)\n");
+    return CGIT_ERROR_INVALID_OBJECT;
+  }
+
+  i++; /* Skip NUL terminator */
+
+  *content_size = size_val;
+  *payload_offset = i;
+
+  return CGIT_OK;
+}
+
 cgit_error_t read_file(const char *path, buffer_t *output) {
   FILE *file = NULL;
   cgit_error_t result = CGIT_OK;

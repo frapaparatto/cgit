@@ -32,86 +32,41 @@ cgit_error_t read_object(const char *hash, git_object_t *obj) {
     goto cleanup;
   }
 
-  /* Parse type: scan until space separator */
-  size_t i = 0;
-  while (i < out_buf.size && out_buf.data[i] != ' ') i++;
-  if (i >= out_buf.size) {
-    fprintf(stderr, "error: invalid object header (no space after type)\n");
+  /* Parse header */
+  char type_buf[CGIT_MAX_TYPE_LEN];
+  size_t content_size = 0;
+  size_t payload_offset = 0;
+
+  result = parse_object_header(out_buf.data, out_buf.size, type_buf,
+                               sizeof(type_buf), &content_size,
+                               &payload_offset);
+  if (result != CGIT_OK) {
+    goto cleanup;
+  }
+
+  /* Validate payload size matches header */
+  size_t payload_len = out_buf.size - payload_offset;
+  if (payload_len != content_size) {
+    fprintf(stderr, "error: invalid object (size mismatch)\n");
     result = CGIT_ERROR_INVALID_OBJECT;
     goto cleanup;
   }
-  size_t type_len = i;
 
-  obj->type = malloc(type_len + 1);
-
+  /* Populate object struct */
+  obj->type = strdup(type_buf);
   if (!obj->type) {
     result = CGIT_ERROR_MEMORY;
     goto cleanup;
   }
 
-  memcpy(obj->type, out_buf.data, type_len);
-  obj->type[type_len] = '\0';
-
-  /* Parse decimal size until NULL */
-  i++; /* Skip space */
-  if (i >= out_buf.size) {
-    fprintf(stderr, "error: invalid object header (truncated after type)\n");
-    result = CGIT_ERROR_INVALID_OBJECT;
-    goto cleanup;
-  }
-
-  size_t size_val = 0;
-  int saw_digit = 0;
-
-  while (i < out_buf.size && out_buf.data[i] != '\0') {
-    unsigned char c = out_buf.data[i];
-
-    if (c < '0' || c > '9') {
-      fprintf(stderr, "error: invalid object header (bad size)\n");
-      result = CGIT_ERROR_INVALID_OBJECT;
-      goto cleanup;
-    }
-    saw_digit = 1;
-    size_t digit = (size_t)(c - '0');
-    if (size_val > (SIZE_MAX - digit) / 10) {
-      fprintf(stderr, "error: object size too large to represent\n");
-      result = CGIT_ERROR_INVALID_OBJECT;
-      goto cleanup;
-    }
-
-    size_val = size_val * 10 + digit;
-    i++;
-  }
-
-  if (!saw_digit || i == out_buf.size) {
-    fprintf(stderr, "error: invalid object header (no NUL)\n");
-    result = CGIT_ERROR_INVALID_OBJECT;
-    goto cleanup;
-  }
-
-  obj->size = size_val;
-  i++;
-
-  if (i > out_buf.size) {
-    fprintf(stderr, "error: invalid object header (no data after NUL)\n");
-    result = CGIT_ERROR_INVALID_OBJECT;
-    goto cleanup;
-  }
-
-  size_t payload_len = out_buf.size - i;
-  if (payload_len != obj->size) {
-    fprintf(stderr, "error: invalid object (size mismatch)\n");
-    result = CGIT_ERROR_INVALID_OBJECT;
-    goto cleanup;
-  }
+  obj->size = content_size;
   obj->data = malloc(payload_len + 1);
-
   if (!obj->data) {
     result = CGIT_ERROR_MEMORY;
     goto cleanup;
   }
 
-  memcpy(obj->data, out_buf.data + i, payload_len);
+  memcpy(obj->data, out_buf.data + payload_offset, payload_len);
   obj->data[payload_len] = '\0';
 
 cleanup:
