@@ -14,11 +14,11 @@
 #include "../include/core.h"
 #include "common.h"
 
-cgit_error_t compute_sha1(const unsigned char *data, size_t len,
+cgit_error_t compute_sha1(const unsigned char *header, size_t len,
                           char *hex_out) {
   unsigned char hash[SHA_DIGEST_LENGTH];
 
-  if (!SHA1(data, len, hash)) {
+  if (!SHA1(header, len, hash)) {
     return CGIT_ERROR_HASH;
   }
 

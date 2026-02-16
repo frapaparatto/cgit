@@ -93,8 +93,6 @@ cgit_error_t write_object(const unsigned char *data, size_t len,
   result = build_object_header(data, len, type, &header);
   if (result != CGIT_OK) goto cleanup;
 
-  /* TODO: remember to change the argument name data in compute_sha1 function to
-   * be more representative (change in header_data or header) */
   result = compute_sha1(header.data, header.size, hash_out);
   if (result != CGIT_OK) goto cleanup;
   if (!persist) goto cleanup;
