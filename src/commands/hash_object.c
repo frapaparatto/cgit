@@ -86,6 +86,5 @@ int handle_hash_object(int argc, char *argv[]) {
 
 cleanup:
   buffer_free(&buf);
-
   return result;
 }

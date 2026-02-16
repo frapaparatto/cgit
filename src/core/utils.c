@@ -60,10 +60,33 @@ void buffer_free(buffer_t *buf) {
   buf->capacity = 0;
 }
 
+cgit_error_t build_object_header(const unsigned char *data, size_t file_size,
+                                 const char *type, buffer_t *output) {
+  size_t header_len = snprintf(NULL, 0, "%s %zu", type, file_size);
+
+  if (file_size > SIZE_MAX - header_len - 1) {
+    fprintf(stderr, "unable to represent total size\n");
+    return CGIT_ERROR_MEMORY;
+  }
+  size_t total_size = header_len + 1 + file_size;
+
+  output->data = malloc(total_size);
+  if (!output->data) {
+    fprintf(stderr, "error: %s\n", strerror(errno));
+    return CGIT_ERROR_MEMORY;
+  }
+
+  snprintf((char *)output->data, header_len + 1, "%s %zu", type, file_size);
+  memcpy(output->data + header_len + 1, data, file_size);
+  output->size = total_size;
+  output->capacity = total_size;
+
+  return CGIT_OK;
+}
+
 cgit_error_t parse_object_header(const unsigned char *buf, size_t buf_len,
                                  char *type, size_t type_len,
-                                 size_t *content_size,
-                                 size_t *payload_offset) {
+                                 size_t *content_size, size_t *payload_offset) {
   /* Parse type: scan until space separator */
   size_t i = 0;
   while (i < buf_len && buf[i] != ' ') i++;

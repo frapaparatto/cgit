@@ -1,6 +1,8 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "../include/core.h"
 #include "common.h"
@@ -37,9 +39,9 @@ cgit_error_t read_object(const char *hash, git_object_t *obj) {
   size_t content_size = 0;
   size_t payload_offset = 0;
 
-  result = parse_object_header(out_buf.data, out_buf.size, type_buf,
-                               sizeof(type_buf), &content_size,
-                               &payload_offset);
+  result =
+      parse_object_header(out_buf.data, out_buf.size, type_buf,
+                          sizeof(type_buf), &content_size, &payload_offset);
   if (result != CGIT_OK) {
     goto cleanup;
   }
@@ -78,7 +80,61 @@ cleanup:
 cgit_error_t write_object(const unsigned char *data, size_t len,
                           const char *type, char *hash_out, int persist) {
   cgit_error_t result = CGIT_OK;
+  buffer_t header = {0};
+  buffer_t output_buf = {0};
+  char path[CGIT_MAX_PATH_LENGTH];
+  FILE *file = NULL;
 
+  result = build_object_header(data, len, type, &header);
+  if (result != CGIT_OK) goto cleanup;
+
+  /* TODO: remember to change the argument name data in compute_sha1 function to
+   * be more representative (change in header_data or header) */
+  result = compute_sha1(header.data, header.size, hash_out);
+  if (result != CGIT_OK) goto cleanup;
+  if (!persist) goto cleanup;
+
+  /* if persistance, compression, path, writing */
+  result = compress_data(header.data, header.size, &output_buf);
+  if (result != CGIT_OK) goto cleanup;
+
+  result = build_object_path(hash_out, path, sizeof(path));
+  if (result != CGIT_OK) goto cleanup;
+
+  /* Skip if object already exists */
+  struct stat st;
+  if (stat(path, &st) == 0) goto cleanup;
+
+  /* Create the object subdirectory (e.g. .cgit/objects/ab) */
+  char dir[sizeof(CGIT_OBJECTS_DIR) + 1 + CGIT_DIR_BUF_SIZE];
+  snprintf(dir, sizeof(dir), CGIT_OBJECTS_DIR "/%.2s", hash_out);
+
+  if (mkdir(dir, 0755) != 0 && errno != EEXIST) {
+    fprintf(stderr, "error: cannot create directory '%s': %s\n", dir,
+            strerror(errno));
+    result = CGIT_ERROR_IO;
+    goto cleanup;
+  }
+
+  /* Write compressed object to disk */
+  file = fopen(path, "wb");
+  if (!file) {
+    fprintf(stderr, "error: cannot open '%s': %s\n", path, strerror(errno));
+    result = CGIT_ERROR_IO;
+    goto cleanup;
+  }
+
+  size_t written = fwrite(output_buf.data, 1, output_buf.size, file);
+  if (written != output_buf.size) {
+    fprintf(stderr, "error: short write on '%s'\n", path);
+    result = CGIT_ERROR_IO;
+    goto cleanup;
+  }
+
+cleanup:
+  if (file) fclose(file);
+  buffer_free(&header);
+  buffer_free(&output_buf);
   return result;
 }
 
