@@ -22,10 +22,8 @@ typedef enum {
 #define CGIT_COMPRESSION_BUFFER_SIZE 32768
 #define CGIT_READ_BUFFER_SIZE 8192
 #define CGIT_MAX_PATH_LENGTH 256
-
-/* Macro I added */
-#define CGIT_DIR_BUF_SIZE 3
-#define CGIT_OBJ_NAME_BUF_SIZE 39
+#define CGIT_DIR_BUF_SIZE (2 + 1)
+#define CGIT_OBJ_NAME_BUF_SIZE (CGIT_HASH_HEX_LEN - 2 + 1)
 #define CGIT_DEFAULT_OBJ_TYPE "blob"
 #define CGIT_MAX_TYPE_LEN 16
 

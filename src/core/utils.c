@@ -30,7 +30,6 @@ cgit_error_t build_object_path(const char *hash, char *path_out,
 }
 
 cgit_error_t is_valid_hash(const char *hash) {
-  cgit_error_t result = CGIT_OK;
   size_t objlen = strlen(hash);
 
   if (objlen != CGIT_HASH_HEX_LEN) {
@@ -38,7 +37,7 @@ cgit_error_t is_valid_hash(const char *hash) {
             "error: invalid hash name '%s': expected 40 hexadecimal "
             "characters\n",
             hash);
-    result = CGIT_ERROR_INVALID_ARGS;
+    return CGIT_ERROR_INVALID_ARGS;
   }
 
   for (size_t i = 0; i < CGIT_HASH_HEX_LEN; i++) {
@@ -46,10 +45,10 @@ cgit_error_t is_valid_hash(const char *hash) {
       fprintf(stderr,
               "error: invalid hash name '%s': non-hexadecimal character\n",
               hash);
-      result = CGIT_ERROR_INVALID_ARGS;
+      return CGIT_ERROR_INVALID_ARGS;
     }
   }
-  return result;
+  return CGIT_OK;
 }
 
 void buffer_free(buffer_t *buf) {
