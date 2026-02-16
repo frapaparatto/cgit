@@ -15,7 +15,7 @@ cgit_error_t parse_object_header(const unsigned char *buf, size_t buf_len,
 
 cgit_error_t build_object_header(const unsigned char *data, size_t file_size,
                                  const char *type, buffer_t *output);
-cgit_error_t read_object(const char *hash, git_object_t *obj);
+cgit_error_t read_object(const char *hash, git_object_t *obj, int opt_e);
 /* TODO: evaluate what is the cleanest way to write the persist parameter in
  * terms of type used (bool, int) or maybe creating an enum... */
 cgit_error_t write_object(const unsigned char *data, size_t len,
@@ -32,7 +32,7 @@ cgit_error_t compute_sha1(const unsigned char *data, size_t len, char *hex_out);
 cgit_error_t build_object_path(const char *hash, char *path_out,
                                size_t path_size);
 cgit_error_t read_file(const char *path, buffer_t *output);
-int is_valid_hash(const char *hash);
+cgit_error_t is_valid_hash(const char *hash);
 void buffer_free(buffer_t *buf);
 
 #endif

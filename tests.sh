@@ -56,6 +56,16 @@ CONTENT=$("$CGIT" cat-file -p "$HASH")
   ok "content matches" ||
   fail "expected 'hello world', got '$CONTENT'"
 
+# testing cat-file -e (existence check)
+echo "--- cat-file -e ---"
+"$CGIT" cat-file -e "$HASH" &&
+  ok "existing object exits 0" ||
+  fail "existing object should exit 0"
+
+"$CGIT" cat-file -e 0000000000000000000000000000000000000000 2>/dev/null &&
+  fail "missing object should exit non-zero" ||
+  ok "missing object exits non-zero"
+
 echo "--- error handling ---"
 "$CGIT" nosuchcmd 2>/dev/null && fail "unknown command should exit non-zero" || ok "unknown command rejected"
 

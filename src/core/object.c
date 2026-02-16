@@ -3,11 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "../include/core.h"
 #include "common.h"
 
-cgit_error_t read_object(const char *hash, git_object_t *obj) {
+cgit_error_t read_object(const char *hash, git_object_t *obj, int opt_e) {
   char path[CGIT_MAX_PATH_LENGTH];
   cgit_error_t result = CGIT_OK;
   buffer_t buf = {0};
@@ -22,6 +23,10 @@ cgit_error_t read_object(const char *hash, git_object_t *obj) {
   result = build_object_path(hash, path, CGIT_MAX_PATH_LENGTH);
   if (result != CGIT_OK) {
     goto cleanup;
+  }
+
+  if (opt_e) {
+    if (access(path, F_OK) == 0) goto cleanup;
   }
 
   result = read_file(path, &buf);

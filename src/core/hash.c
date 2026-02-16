@@ -19,7 +19,7 @@ cgit_error_t compute_sha1(const unsigned char *data, size_t len,
   unsigned char hash[SHA_DIGEST_LENGTH];
 
   if (!SHA1(data, len, hash)) {
-    return CGIT_ERROR_INVALID_OBJECT;
+    return CGIT_ERROR_HASH;
   }
 
   for (size_t i = 0; i < SHA_DIGEST_LENGTH; i++) {

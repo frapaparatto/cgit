@@ -11,6 +11,7 @@
 cgit_error_t decompress_data(const unsigned char *input, size_t input_len,
                              buffer_t *output) {
   cgit_error_t result = CGIT_OK;
+  int strm_initialized = 0;
   unsigned char tmp[CGIT_COMPRESSION_BUFFER_SIZE];
   output->capacity = CGIT_READ_BUFFER_SIZE;
   output->data = malloc(output->capacity);
@@ -32,6 +33,7 @@ cgit_error_t decompress_data(const unsigned char *input, size_t input_len,
     result = CGIT_ERROR_COMPRESSION;
     goto cleanup;
   }
+  strm_initialized = 1;
 
   for (;;) {
     // Reset output window every iteration
@@ -55,7 +57,7 @@ cgit_error_t decompress_data(const unsigned char *input, size_t input_len,
         unsigned char *p = (unsigned char *)realloc(output->data, new_cap);
         if (!p) {
           fprintf(stderr, "out of memory\n");
-          result = CGIT_ERROR_COMPRESSION;
+          result = CGIT_ERROR_MEMORY;
           goto cleanup;
         }
         output->data = p;
@@ -68,16 +70,16 @@ cgit_error_t decompress_data(const unsigned char *input, size_t input_len,
 
     if (zret == Z_STREAM_END) break;
   }
-  goto cleanup;
 
 cleanup:
-  inflateEnd(&strm);
+  if (strm_initialized) inflateEnd(&strm);
   return result;
 }
 
 cgit_error_t compress_data(const unsigned char *input, size_t input_len,
                            buffer_t *output) {
   cgit_error_t result = CGIT_OK;
+  int strm_initialized = 0;
   unsigned char tmp[CGIT_COMPRESSION_BUFFER_SIZE];
   output->capacity = CGIT_READ_BUFFER_SIZE;
   output->data = malloc(output->capacity);
@@ -97,8 +99,10 @@ cgit_error_t compress_data(const unsigned char *input, size_t input_len,
   int ret = deflateInit(&strm, Z_DEFAULT_COMPRESSION);
   if (ret != Z_OK) {
     fprintf(stderr, "compression error\n");
+    result = CGIT_ERROR_COMPRESSION;
     goto cleanup;
   }
+  strm_initialized = 1;
 
   do {
     strm.next_out = tmp;
@@ -144,9 +148,7 @@ cgit_error_t compress_data(const unsigned char *input, size_t input_len,
     }
   } while (ret != Z_STREAM_END);
 
-  goto cleanup;
-
 cleanup:
-  deflateEnd(&strm);
+  if (strm_initialized) deflateEnd(&strm);
   return result;
 }

@@ -11,6 +11,7 @@ typedef enum {
   CGIT_ERROR_INVALID_OBJECT,
   CGIT_ERROR_IO,
   CGIT_ERROR_COMPRESSION,
+  CGIT_ERROR_HASH,
 } cgit_error_t;
 
 #define CGIT_DIR ".cgit"
