@@ -66,6 +66,40 @@ echo "--- cat-file -e ---"
   fail "missing object should exit non-zero" ||
   ok "missing object exits non-zero"
 
+# testing ls-tree
+# We need a tree object in .cgit/objects. Create a real git repo, build a tree,
+# then copy its objects into .cgit/objects so cgit can read them.
+echo "--- ls-tree ---"
+LSDIR="$TMPDIR/ls-tree-test"
+mkdir -p "$LSDIR" && cd "$LSDIR"
+git init --quiet
+mkdir -p subdir
+echo "file content" > hello.txt
+echo "nested content" > subdir/nested.txt
+git add .
+git commit -m "test commit" --quiet
+TREE_HASH=$(git rev-parse HEAD^{tree})
+
+# Bootstrap cgit repo and copy git objects into it
+"$CGIT" init >/dev/null
+cp -r .git/objects/* .cgit/objects/
+
+EXPECTED=$(git ls-tree "$TREE_HASH")
+ACTUAL=$("$CGIT" ls-tree "$TREE_HASH")
+[ "$EXPECTED" = "$ACTUAL" ] &&
+  ok "ls-tree output matches git" ||
+  fail "ls-tree output differs (expected: '$EXPECTED', got: '$ACTUAL')"
+
+# testing ls-tree --name-only
+echo "--- ls-tree --name-only ---"
+EXPECTED=$(git ls-tree --name-only "$TREE_HASH")
+ACTUAL=$("$CGIT" ls-tree --name-only "$TREE_HASH")
+[ "$EXPECTED" = "$ACTUAL" ] &&
+  ok "ls-tree --name-only output matches git" ||
+  fail "ls-tree --name-only output differs (expected: '$EXPECTED', got: '$ACTUAL')"
+
+cd "$TMPDIR"
+
 echo "--- error handling ---"
 "$CGIT" nosuchcmd 2>/dev/null && fail "unknown command should exit non-zero" || ok "unknown command rejected"
 
