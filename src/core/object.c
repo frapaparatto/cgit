@@ -8,7 +8,153 @@
 #include "../include/core.h"
 #include "common.h"
 
-cgit_error_t read_object(const char *hash, git_object_t *obj, int opt_e) {
+static const char *type_from_mode(unsigned int mode) {
+  switch (mode) {
+    case 0100644:
+    case 0100755:
+    case 0120000:
+      return "blob";
+    case 040000:
+      return "tree";
+    default:
+      return NULL;
+  }
+}
+
+cgit_error_t parse_tree(const unsigned char *data, size_t len,
+                        tree_entry_t **entries_out, size_t *count_out) {
+  cgit_error_t result = CGIT_OK;
+  tree_entry_t *entries = NULL;
+  size_t count = 0;
+  size_t i = 0;
+
+  while (i < len) {
+    /* Parse mode: read until space */
+    size_t mode_start = i;
+    while (i < len && data[i] != ' ') i++;
+
+    if (i >= len) {
+      fprintf(stderr, "error: invalid tree content\n");
+      result = CGIT_ERROR_INVALID_OBJECT;
+      goto cleanup;
+    }
+
+    char mode_str[CGIT_MAX_MODE_LEN];
+    size_t mode_len = i - mode_start;
+    if (mode_len >= sizeof(mode_str)) {
+      fprintf(stderr, "error: invalid tree content\n");
+      result = CGIT_ERROR_INVALID_OBJECT;
+      goto cleanup;
+    }
+    memcpy(mode_str, data + mode_start, mode_len);
+    mode_str[mode_len] = '\0';
+
+    char *endptr;
+    unsigned int mode = (unsigned int)strtol(mode_str, &endptr, 8);
+    if (*endptr != '\0') {
+      fprintf(stderr, "error: invalid mode in tree entry\n");
+      result = CGIT_ERROR_INVALID_OBJECT;
+      goto cleanup;
+    }
+
+    const char *type = type_from_mode(mode);
+    if (!type) {
+      fprintf(stderr, "fatal: invalid mode %o\n", mode);
+      result = CGIT_ERROR_INVALID_OBJECT;
+      goto cleanup;
+    }
+
+    i++; /* skip space */
+
+    /* Parse name: read until null terminator */
+    size_t name_start = i;
+    while (i < len && data[i] != '\0') i++;
+
+    if (i >= len) {
+      fprintf(stderr, "error: invalid tree content\n");
+      result = CGIT_ERROR_INVALID_OBJECT;
+      goto cleanup;
+    }
+
+    size_t name_len = i - name_start;
+    i++; /* skip null terminator */
+
+    /* Parse raw SHA1 hash */
+    if (i + CGIT_HASH_RAW_LEN > len) {
+      fprintf(stderr, "error: invalid tree content\n");
+      result = CGIT_ERROR_INVALID_OBJECT;
+      goto cleanup;
+    }
+
+    /* Grow entries array */
+    tree_entry_t *tmp = realloc(entries, (count + 1) * sizeof(tree_entry_t));
+    if (!tmp) {
+      result = CGIT_ERROR_MEMORY;
+      goto cleanup;
+    }
+    entries = tmp;
+
+    /* Populate entry */
+    tree_entry_t *entry = &entries[count];
+    entry->mode = mode;
+
+    entry->type = strdup(type);
+    if (!entry->type) {
+      result = CGIT_ERROR_MEMORY;
+      goto cleanup;
+    }
+
+    entry->name = malloc(name_len + 1);
+    if (!entry->name) {
+      free(entry->type);
+      result = CGIT_ERROR_MEMORY;
+      goto cleanup;
+    }
+    memcpy(entry->name, data + name_start, name_len);
+    entry->name[name_len] = '\0';
+
+    for (size_t j = 0; j < CGIT_HASH_RAW_LEN; j++) {
+      sprintf(entry->hash + 2 * j, "%02x", data[i + j]);
+    }
+    entry->hash[CGIT_HASH_HEX_LEN] = '\0';
+
+    i += CGIT_HASH_RAW_LEN;
+    count++;
+  }
+
+  *entries_out = entries;
+  *count_out = count;
+  return CGIT_OK;
+
+cleanup:
+  free_tree_entries(entries, count);
+  return result;
+}
+
+void free_tree_entries(tree_entry_t *entries, size_t count) {
+  for (size_t i = 0; i < count; i++) {
+    free(entries[i].type);
+    free(entries[i].name);
+  }
+  free(entries);
+}
+
+cgit_error_t object_exists(const char *hash) {
+  char path[CGIT_MAX_PATH_LENGTH];
+  cgit_error_t result = CGIT_OK;
+
+  result = is_valid_hash(hash);
+  if (result != CGIT_OK) return result;
+
+  result = build_object_path(hash, path, CGIT_MAX_PATH_LENGTH);
+  if (result != CGIT_OK) return result;
+
+  if (access(path, F_OK) != 0) return CGIT_ERROR_FILE_NOT_FOUND;
+
+  return CGIT_OK;
+}
+
+cgit_error_t read_object(const char *hash, git_object_t *obj) {
   char path[CGIT_MAX_PATH_LENGTH];
   cgit_error_t result = CGIT_OK;
   buffer_t buf = {0};
@@ -16,17 +162,12 @@ cgit_error_t read_object(const char *hash, git_object_t *obj, int opt_e) {
 
   result = is_valid_hash(hash);
   if (result != CGIT_OK) {
-    /* Error is printed by the is_valid_hash() function */
     goto cleanup;
   }
 
   result = build_object_path(hash, path, CGIT_MAX_PATH_LENGTH);
   if (result != CGIT_OK) {
     goto cleanup;
-  }
-
-  if (opt_e) {
-    if (access(path, F_OK) == 0) goto cleanup;
   }
 
   result = read_file(path, &buf);

@@ -26,7 +26,8 @@ cgit_error_t parse_object_header(const unsigned char *buf, size_t buf_len,
                                  size_t *content_size, size_t *payload_offset);
 cgit_error_t build_object_header(const unsigned char *data, size_t file_size,
                                  const char *type, buffer_t *output);
-cgit_error_t read_object(const char *hash, git_object_t *obj, int opt_e);
+cgit_error_t object_exists(const char *hash);
+cgit_error_t read_object(const char *hash, git_object_t *obj);
 cgit_error_t write_object(const unsigned char *data, size_t len,
                           const char *type, char *hash_out, int persist);
 void free_object(git_object_t *obj);

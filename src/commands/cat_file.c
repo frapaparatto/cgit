@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "../include/common.h"
 #include "../include/core.h"
@@ -13,9 +14,6 @@ static int cmd_cat_file(int opt, const char *exp_type, git_object_t *obj) {
 
     case 's':
       printf("%zu\n", obj->size);
-      return 0;
-
-    case 'e':
       return 0;
 
     case 'p':
@@ -35,7 +33,6 @@ static int cmd_cat_file(int opt, const char *exp_type, git_object_t *obj) {
 
 int handle_cat_file(int argc, char *argv[]) {
   int opt = 0;
-  int opt_e = 0;
   int result = 1; /* default: failure */
   git_object_t obj = {0};
   const char *obj_hash = NULL;
@@ -64,9 +61,13 @@ int handle_cat_file(int argc, char *argv[]) {
 
   if (!opt) exp_type = argv[1];
   obj_hash = argv[2];
-  if (opt == 'e') opt_e = 1;
 
-  cgit_error_t err = read_object(obj_hash, &obj, opt_e);
+  if (opt == 'e') {
+    result = (object_exists(obj_hash) == CGIT_OK) ? 0 : 1;
+    goto cleanup;
+  }
+
+  cgit_error_t err = read_object(obj_hash, &obj);
   if (err != CGIT_OK) {
     fprintf(stderr, "Failed to read object %s\n", obj_hash);
     goto cleanup;
