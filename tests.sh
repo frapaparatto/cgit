@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Smoke test: run this after every refactoring step to verify nothing broke.
-# Usage: ./test_smoke.sh [path-to-cgit-binary]
+
 set -euo pipefail
 
 CGIT="$(cd "$(dirname "${1:-./build/cgit}")" && pwd)/$(basename "${1:-./build/cgit}")"
@@ -74,11 +73,11 @@ LSDIR="$TMPDIR/ls-tree-test"
 mkdir -p "$LSDIR" && cd "$LSDIR"
 git init --quiet
 mkdir -p subdir
-echo "file content" > hello.txt
-echo "nested content" > subdir/nested.txt
+echo "file content" >hello.txt
+echo "nested content" >subdir/nested.txt
 git add .
 git commit -m "test commit" --quiet
-TREE_HASH=$(git rev-parse HEAD^{tree})
+TREE_HASH=$(git rev-parse HEAD^\{tree\})
 
 # Bootstrap cgit repo and copy git objects into it
 "$CGIT" init >/dev/null
