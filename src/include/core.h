@@ -20,6 +20,7 @@ cgit_error_t parse_tree(const unsigned char *data, size_t len,
                         tree_entry_t **entries_out, size_t *count_out);
 
 void free_tree_entries(tree_entry_t *entries, size_t count);
+cgit_error_t hex_to_bytes_hash(const unsigned char *hex_hash, char *hash_out);
 
 cgit_error_t parse_object_header(const unsigned char *buf, size_t buf_len,
                                  char *type, size_t type_len,

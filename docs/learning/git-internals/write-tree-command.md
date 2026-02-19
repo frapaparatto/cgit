@@ -66,7 +66,7 @@ These are two different operations in two different places in the code. Not an i
 
 ### SHA-1 Format: Hex vs Raw Bytes
 
-`compute_sha1` produces 40-char hex. That's its single, well-defined output. Don't add format parameters.
+`compute_sha1` produces 40-char hex. That's its single, well-defined output. 
 
 The tree binary format requires 20 raw bytes. The conversion from hex to raw bytes is a small utility function (`hex_to_bytes` in utils.c). Two hex chars become one byte.
 
