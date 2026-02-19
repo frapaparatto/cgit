@@ -157,3 +157,4 @@ void free_tree_entries(tree_entry_t *entries, size_t count);
 - The handler calls `free_tree_entries` in its cleanup section
 - `hash` is a fixed-size array inside the struct — no separate allocation needed
 - `type` and `name` are pointers that `parse_tree` allocates per entry
+- `type` is allocated with `strdup` even though `type_from_mode` returns a pointer to a string literal (e.g. `"blob"`, `"tree"`) which lives in static read-only memory and would remain valid. The reason is **ownership consistency**: `free_tree_entries` unconditionally calls `free()` on every `entry->type`. If `type` pointed directly to a string literal, that `free()` would be undefined behavior. By using `strdup`, every entry owns its own copy, and the cleanup path can free uniformly without special-casing.
