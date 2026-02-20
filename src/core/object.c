@@ -1,9 +1,9 @@
 #include <dirent.h>
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/_types/_s_ifmt.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -156,15 +156,16 @@ cgit_error_t write_tree_recursive(const char *path, tree_entry_t **entries_out,
       goto cleanup;
     }
     entry->mode = mode;
-    entry->name = malloc(dir_entry->d_namlen + 1);
+    entry->name = malloc(strlen(dir_entry->d_name) + 1);
 
     if (!entry->name) {
       free(entry->type);
       result = CGIT_ERROR_MEMORY;
       goto cleanup;
     }
-    memcpy(entry->name, dir_entry->d_name, dir_entry->d_namlen);
-    entry->name[dir_entry->d_namlen] = '\0';
+
+    memcpy(entry->name, dir_entry->d_name, strlen(dir_entry->d_name));
+    entry->name[strlen(dir_entry->d_name)] = '\0';
 
     if (strcmp(entry->type, "blob") == 0) {
       result = read_file(sub_path, &buf);
