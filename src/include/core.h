@@ -16,8 +16,12 @@ typedef struct {
   unsigned char *data;
 } git_object_t;
 
+cgit_error_t serialize_tree(tree_entry_t *entries, size_t count, buffer_t *out);
 cgit_error_t parse_tree(const unsigned char *data, size_t len,
                         tree_entry_t **entries_out, size_t *count_out);
+
+cgit_error_t write_tree_recursive(const char *path, tree_entry_t **entries_out,
+                                  size_t *count_out);
 
 void free_tree_entries(tree_entry_t *entries, size_t count);
 cgit_error_t hex_to_bytes_hash(const unsigned char *hex_hash, char *hash_out);
