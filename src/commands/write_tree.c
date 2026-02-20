@@ -32,6 +32,7 @@ int handle_write_tree(int argc, char *argv[]) {
     goto cleanup;
   }
 
+  printf("%s\n", hash_out);
   result = 0;
 cleanup:
   buffer_free(&out);
