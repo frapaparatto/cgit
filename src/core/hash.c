@@ -11,8 +11,8 @@
 #include <openssl/sha.h>
 #include <stdio.h>
 
+#include "../include/common.h"
 #include "../include/core.h"
-#include "common.h"
 
 cgit_error_t compute_sha1(const unsigned char *header, size_t len,
                           char *hex_out) {

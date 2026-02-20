@@ -99,6 +99,94 @@ ACTUAL=$("$CGIT" ls-tree --name-only "$TREE_HASH")
 
 cd "$TMPDIR"
 
+# testing write-tree (flat directory)
+echo "--- write-tree (flat) ---"
+WTDIR="$TMPDIR/write-tree-flat"
+mkdir -p "$WTDIR" && cd "$WTDIR"
+"$CGIT" init >/dev/null
+echo "hello world" >hello.txt
+echo "foo bar" >readme.md
+
+# Build a reference tree with real git (same files, no .cgit contamination)
+WTGIT="$TMPDIR/write-tree-flat-git"
+mkdir -p "$WTGIT"
+cp hello.txt readme.md "$WTGIT/"
+git -C "$WTGIT" init --quiet
+git -C "$WTGIT" add .
+GIT_FLAT_HASH=$(git -C "$WTGIT" write-tree)
+
+WT_HASH=$("$CGIT" write-tree)
+[ ${#WT_HASH} -eq 40 ] &&
+  ok "write-tree produces 40-char hash" ||
+  fail "write-tree did not produce 40-char hash, got '$WT_HASH'"
+
+[ "$WT_HASH" = "$GIT_FLAT_HASH" ] &&
+  ok "write-tree hash matches git ($WT_HASH)" ||
+  fail "write-tree hash mismatch (cgit: '$WT_HASH', git: '$GIT_FLAT_HASH')"
+
+TYPE=$("$CGIT" cat-file -t "$WT_HASH")
+[ "$TYPE" = "tree" ] &&
+  ok "write-tree object type is 'tree'" ||
+  fail "expected type 'tree', got '$TYPE'"
+
+"$CGIT" cat-file -e "$WT_HASH" &&
+  ok "write-tree object exists (cat-file -e)" ||
+  fail "write-tree object not found via cat-file -e"
+
+EXPECTED=$(git -C "$WTGIT" ls-tree "$GIT_FLAT_HASH")
+ACTUAL=$("$CGIT" ls-tree "$WT_HASH")
+[ "$EXPECTED" = "$ACTUAL" ] &&
+  ok "ls-tree on write-tree output matches git" ||
+  fail "ls-tree mismatch (expected: '$EXPECTED', got: '$ACTUAL')"
+
+WT_HASH2=$("$CGIT" write-tree)
+[ "$WT_HASH" = "$WT_HASH2" ] &&
+  ok "write-tree is idempotent" ||
+  fail "write-tree not idempotent (first: '$WT_HASH', second: '$WT_HASH2')"
+
+# testing write-tree (recursive — directory with subdirectory)
+echo "--- write-tree (recursive) ---"
+WTSUBDIR="$TMPDIR/write-tree-subdir"
+mkdir -p "$WTSUBDIR" && cd "$WTSUBDIR"
+"$CGIT" init >/dev/null
+echo "top level" >top.txt
+mkdir -p subdir
+echo "nested content" >subdir/nested.txt
+
+WTSUBGIT="$TMPDIR/write-tree-subdir-git"
+mkdir -p "$WTSUBGIT/subdir"
+cp top.txt "$WTSUBGIT/"
+cp subdir/nested.txt "$WTSUBGIT/subdir/"
+git -C "$WTSUBGIT" init --quiet
+git -C "$WTSUBGIT" add .
+GIT_SUB_HASH=$(git -C "$WTSUBGIT" write-tree)
+
+SUB_HASH=$("$CGIT" write-tree)
+[ ${#SUB_HASH} -eq 40 ] &&
+  ok "write-tree (recursive) produces 40-char hash" ||
+  fail "write-tree (recursive) did not produce 40-char hash, got '$SUB_HASH'"
+
+[ "$SUB_HASH" = "$GIT_SUB_HASH" ] &&
+  ok "write-tree (recursive) hash matches git ($SUB_HASH)" ||
+  fail "write-tree (recursive) hash mismatch (cgit: '$SUB_HASH', git: '$GIT_SUB_HASH')"
+
+EXPECTED=$(git -C "$WTSUBGIT" ls-tree "$GIT_SUB_HASH")
+ACTUAL=$("$CGIT" ls-tree "$SUB_HASH")
+[ "$EXPECTED" = "$ACTUAL" ] &&
+  ok "ls-tree on recursive write-tree output matches git" ||
+  fail "ls-tree (recursive) mismatch (expected: '$EXPECTED', got: '$ACTUAL')"
+
+# testing write-tree outside a repo (no .cgit)
+echo "--- write-tree outside repo ---"
+NOREPODIR="$TMPDIR/no-repo"
+mkdir -p "$NOREPODIR" && cd "$NOREPODIR"
+echo "some file" >file.txt
+"$CGIT" write-tree 2>/dev/null &&
+  fail "write-tree outside repo should exit non-zero" ||
+  ok "write-tree outside repo exits non-zero"
+
+cd "$TMPDIR"
+
 echo "--- error handling ---"
 "$CGIT" nosuchcmd 2>/dev/null && fail "unknown command should exit non-zero" || ok "unknown command rejected"
 

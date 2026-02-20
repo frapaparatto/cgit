@@ -7,8 +7,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "../include/common.h"
 #include "../include/core.h"
-#include "common.h"
 
 static int cmp_entry(const void *a, const void *b) {
   return strcmp(((tree_entry_t *)a)->name, ((tree_entry_t *)b)->name);
@@ -97,6 +97,9 @@ cgit_error_t write_tree_recursive(const char *path, tree_entry_t **entries_out,
   tree_entry_t *entries = NULL;
   size_t count = 0;
   int persist = 1;
+  buffer_t buf = {0};
+  tree_entry_t *sub_entries = NULL;
+  size_t sub_count = 0;
 
   DIR *dir = opendir(path);
   if (!dir) {
@@ -164,37 +167,46 @@ cgit_error_t write_tree_recursive(const char *path, tree_entry_t **entries_out,
     entry->name[dir_entry->d_namlen] = '\0';
 
     if (strcmp(entry->type, "blob") == 0) {
-      char *f;
-      buffer_t buf = {0};
-
-      result = read_file(f, &buf);
+      result = read_file(sub_path, &buf);
       if (result != CGIT_OK) {
-        fprintf(stderr, "Failed to read file '%s'\n", f);
+        fprintf(stderr, "Failed to read file '%s'\n", sub_path);
         goto cleanup;
       }
 
-      cgit_error_t result =
-          write_object(buf.data, buf.size, type, entry->hash, persist);
+      result = write_object(buf.data, buf.size, type, entry->hash, persist);
       if (result != CGIT_OK) {
         fprintf(stderr, "Failed to create the object\n");
         goto cleanup;
       }
     } else if (strcmp(entry->type, "tree") == 0) {
-      tree_entry_t *sub_entries = NULL;
-      size_t sub_count = 0;
-      buffer_t out = {0};
-
       result = write_tree_recursive(sub_path, &sub_entries, &sub_count);
       if (result != CGIT_OK) goto cleanup;
 
-      result = serialize_tree(sub_entries, sub_count, &out);
+      result = serialize_tree(sub_entries, sub_count, &buf);
       if (result != CGIT_OK) goto cleanup;
+
+      result = write_object(buf.data, buf.size, "tree", entry->hash, persist);
+      if (result != CGIT_OK) goto cleanup;
+
+      free_tree_entries(sub_entries, sub_count);
+      sub_entries = NULL;
+      sub_count = 0;
     }
+
+    buffer_free(&buf);
+    count++;
   }
+
+  *entries_out = entries;
+  *count_out = count;
+
+  return result;
+
 cleanup:
-  /* REMEMBER TO FREE ALL ALLOCATED THIGNS*/
+  buffer_free(&buf);
+  free_tree_entries(sub_entries, sub_count);
   free_tree_entries(entries, count);
-  closedir(dir);
+  if (dir) closedir(dir);
   return result;
 }
 

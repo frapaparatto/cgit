@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "common.h"
-#include "core.h"
+#include "../include/common.h"
+#include "../include/core.h"
 
 int handle_ls_tree(int argc, char *argv[]) {
   int opt_name_only = 0;

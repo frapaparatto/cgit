@@ -1,36 +1,40 @@
 
-int handle_ls_tree(int argc, char *argv[]) {
+#include <stdio.h>
+
+#include "../include/common.h"
+#include "../include/core.h"
+
+int handle_write_tree(int argc, char *argv[]) {
   int result = 1;
-  /*
-   *
-handle_write_tree (commands/write_tree.c)
-  │
-  └── write_tree_recursive (core/object.c)
-        │
-        ├── for each file:
-        │     read_file → write_object("blob", ...) → get hash
-        │
-        ├── for each directory:
-        │     write_tree_recursive(subdir) → get hash    ← recurse
-        │
-        ├── sort entries alphabetically
-        ├── serialize entries to binary format (using hex_to_bytes for hashes)
-        └── write_object("tree", content, ...) → return tree hash
+  tree_entry_t *entries = NULL;
+  size_t count = 0;
+  char *curr_dir_path = ".";
+  buffer_t out = {0};
+  int persist = 1;
+  char hash_out[CGIT_HASH_HEX_LEN + 1];
 
-You don't need a wrapper. You already have the pattern from `parse_tree` — a
-dynamically allocated array of `tree_entry_t` and a `size_t count`. Use the same
-approach.
+  cgit_error_t err = write_tree_recursive(curr_dir_path, &entries, &count);
+  if (err != CGIT_OK) {
+    fprintf(stderr, "Failed to create tree object\n");
+    goto cleanup;
+  }
 
-Your `write_tree_recursive` function scans a directory, builds up an array of
-`tree_entry_t` (one per entry), sorts the array by name, serializes to binary
-content, writes the tree object, and returns the hash. The array and count are
-local to that function call — each directory level creates its own, uses it,
-frees it.
+  cgit_error_t err_serialize = serialize_tree(entries, count, &out);
+  if (err_serialize != CGIT_OK) {
+    fprintf(stderr, "Failed to serialize tree object\n");
+    goto cleanup;
+  }
 
-The one mismatch to keep in mind: `tree_entry_t` stores the hash as 40-char hex,
-but the binary format needs 20 raw bytes. You handle that at serialization time
-with `hex_to_bytes` — not a reason to create a different struct.
-   */
+  cgit_error_t err_writing =
+      write_object(out.data, out.size, "tree", hash_out, persist);
+  if (err_writing != CGIT_OK) {
+    fprintf(stderr, "Failed to write tree object\n");
+    goto cleanup;
+  }
 
+  result = 0;
+cleanup:
+  buffer_free(&out);
+  free_tree_entries(entries, count);
   return result;
 }
