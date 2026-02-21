@@ -16,6 +16,11 @@ typedef struct {
   unsigned char *data;
 } git_object_t;
 
+cgit_error_t build_commit_content(const char *tree_hash,
+                                  const char *parent_hash, const char *author,
+                                  const char *email, const char *message,
+                                  buffer_t *output);
+
 cgit_error_t serialize_tree(tree_entry_t *entries, size_t count, buffer_t *out);
 cgit_error_t parse_tree(const unsigned char *data, size_t len,
                         tree_entry_t **entries_out, size_t *count_out);
@@ -29,8 +34,10 @@ cgit_error_t hex_to_bytes_hash(const unsigned char *hex_hash, char *hash_out);
 cgit_error_t parse_object_header(const unsigned char *buf, size_t buf_len,
                                  char *type, size_t type_len,
                                  size_t *content_size, size_t *payload_offset);
+
 cgit_error_t build_object_header(const unsigned char *data, size_t file_size,
                                  const char *type, buffer_t *output);
+
 cgit_error_t object_exists(const char *hash);
 cgit_error_t read_object(const char *hash, git_object_t *obj);
 cgit_error_t write_object(const unsigned char *data, size_t len,

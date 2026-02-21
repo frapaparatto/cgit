@@ -16,6 +16,7 @@ static const command_t commands[] = {
     {"hash-object", handle_hash_object, "cgit hash-object [-w] <file>"},
     {"ls-tree", handle_ls_tree, "cgit ls-tree [--name-only] <object>"},
     {"write-tree", handle_write_tree, "cgit write-tree"},
+    {"commit-tree", handle_commit_tree, "cgit commit-tree"},
     {NULL, NULL, NULL}};
 
 int main(int argc, char *argv[]) {

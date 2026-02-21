@@ -30,6 +30,11 @@ typedef enum {
 #define CGIT_MAX_TYPE_LEN 16
 #define CGIT_MAX_MODE_LEN 8
 
+#define CGIT_AUTHOR_NAME "Francesco Paparatto"
+#define CGIT_COMMITTER_NAME CGIT_AUTHOR_NAME
+#define CGIT_AUTHOR_EMAIL "frapaparatto@cgit.com"
+#define CGIT_COMMITTER_EMAIL CGIT_AUTHOR_EMAIL
+
 typedef struct {
   unsigned char *data;
   size_t size;

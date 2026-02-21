@@ -187,6 +187,73 @@ echo "some file" >file.txt
 
 cd "$TMPDIR"
 
+# testing commit-tree
+echo "--- commit-tree (root commit) ---"
+CTDIR="$TMPDIR/commit-tree-test"
+mkdir -p "$CTDIR" && cd "$CTDIR"
+"$CGIT" init >/dev/null
+echo "hello" >hello.txt
+TREE_H=$("$CGIT" write-tree)
+
+COMMIT_H=$("$CGIT" commit-tree "$TREE_H" -m "initial commit")
+[ ${#COMMIT_H} -eq 40 ] &&
+  ok "commit-tree produces 40-char hash" ||
+  fail "commit-tree did not produce 40-char hash, got '$COMMIT_H'"
+
+TYPE=$("$CGIT" cat-file -t "$COMMIT_H")
+[ "$TYPE" = "commit" ] &&
+  ok "commit-tree object type is 'commit'" ||
+  fail "expected type 'commit', got '$TYPE'"
+
+CONTENT=$("$CGIT" cat-file -p "$COMMIT_H")
+echo "$CONTENT" | grep -q "^tree $TREE_H$" &&
+  ok "commit content has correct tree hash" ||
+  fail "commit content missing correct tree line"
+
+echo "$CONTENT" | grep -q "^initial commit$" &&
+  ok "commit content has correct message" ||
+  fail "commit content missing correct message"
+
+echo "$CONTENT" | grep -q "^parent " &&
+  fail "root commit should not have parent line" ||
+  ok "root commit has no parent line"
+
+# testing commit-tree with parent
+echo "--- commit-tree (with parent) ---"
+COMMIT_H2=$("$CGIT" commit-tree "$TREE_H" -p "$COMMIT_H" -m "second commit")
+[ ${#COMMIT_H2} -eq 40 ] &&
+  ok "commit-tree with parent produces 40-char hash" ||
+  fail "commit-tree with parent did not produce 40-char hash, got '$COMMIT_H2'"
+
+CONTENT2=$("$CGIT" cat-file -p "$COMMIT_H2")
+echo "$CONTENT2" | grep -q "^tree $TREE_H$" &&
+  ok "commit with parent has correct tree hash" ||
+  fail "commit with parent missing correct tree line"
+
+echo "$CONTENT2" | grep -q "^parent $COMMIT_H$" &&
+  ok "commit content has correct parent hash" ||
+  fail "commit content missing correct parent line"
+
+echo "$CONTENT2" | grep -q "^second commit$" &&
+  ok "commit with parent has correct message" ||
+  fail "commit with parent missing correct message"
+
+# testing commit-tree error cases
+echo "--- commit-tree (error cases) ---"
+"$CGIT" commit-tree "$TREE_H" 2>/dev/null &&
+  fail "commit-tree without -m should exit non-zero" ||
+  ok "commit-tree without -m exits non-zero"
+
+"$CGIT" commit-tree "not-a-valid-hash" -m "test" 2>/dev/null &&
+  fail "commit-tree with invalid tree hash should exit non-zero" ||
+  ok "commit-tree with invalid tree hash exits non-zero"
+
+"$CGIT" commit-tree "$TREE_H" -p "not-a-valid-hash" -m "test" 2>/dev/null &&
+  fail "commit-tree with invalid parent hash should exit non-zero" ||
+  ok "commit-tree with invalid parent hash exits non-zero"
+
+cd "$TMPDIR"
+
 echo "--- error handling ---"
 "$CGIT" nosuchcmd 2>/dev/null && fail "unknown command should exit non-zero" || ok "unknown command rejected"
 

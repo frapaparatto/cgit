@@ -1,14 +1,114 @@
 #include <dirent.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "../include/common.h"
 #include "../include/core.h"
+
+static cgit_error_t buffer_append_fmt(buffer_t *buf, const char *fmt, ...) {
+  cgit_error_t result = CGIT_OK;
+
+  if (!buf->data) {
+    buf->data = malloc(CGIT_READ_BUFFER_SIZE);
+    if (!buf->data) {
+      fprintf(stderr,
+              "error: buffer_append_fmt: failed to allocate output buffer\n");
+      return CGIT_ERROR_MEMORY;
+    }
+    buf->capacity = CGIT_READ_BUFFER_SIZE;
+    buf->size = 0;
+  }
+
+  va_list args;
+  va_start(args, fmt);
+  size_t len_line = vsnprintf(NULL, 0, fmt, args);
+  va_end(args);
+
+  if (len_line > buf->capacity - buf->size) {
+    size_t new_cap = buf->capacity;
+
+    while (len_line > new_cap - buf->size) {
+      if (new_cap > SIZE_MAX / 2) {
+        fprintf(stderr, "out of memory");
+        result = CGIT_ERROR_MEMORY;
+        goto cleanup;
+      }
+      new_cap *= 2;
+    }
+
+    unsigned char *tmp_buf = realloc(buf->data, new_cap);
+    if (!tmp_buf) {
+      fprintf(stderr,
+              "error: serialize_tree: realloc failed growing buffer to %zu "
+              "bytes\n",
+              new_cap);
+      result = CGIT_ERROR_MEMORY;
+      goto cleanup;
+    }
+
+    buf->data = tmp_buf;
+    buf->capacity = new_cap;
+  }
+  va_start(args, fmt);
+  vsnprintf((char *)buf->data + buf->size, len_line + 1, fmt, args);
+  va_end(args);
+
+  buf->size += len_line;
+
+cleanup:
+  return result;
+}
+
+cgit_error_t build_commit_content(const char *tree_hash,
+                                  const char *parent_hash, const char *author,
+                                  const char *email, const char *message,
+                                  buffer_t *output) {
+  cgit_error_t result = CGIT_OK;
+  time_t timestamp;
+  time(&timestamp);
+  struct tm lt;
+  localtime_r(&timestamp, &lt);
+
+  int offset_seconds = lt.tm_gmtoff;
+  char sign = offset_seconds >= 0 ? '+' : '-';
+  int abs_offset = abs(offset_seconds);
+  int hours = abs_offset / 3600;
+  int minutes = (abs_offset % 3600) / 60;
+
+  result = buffer_append_fmt(output, "tree %s\n", tree_hash);
+  if (result != CGIT_OK) goto cleanup;
+
+  if (parent_hash) {
+    result = buffer_append_fmt(output, "parent %s\n", parent_hash);
+    if (result != CGIT_OK) goto cleanup;
+  }
+
+  result = buffer_append_fmt(output, "author %s <%s> %ld %c%02d%02d\n",
+                             author, email, (long)timestamp, sign, hours,
+                             minutes);
+  if (result != CGIT_OK) goto cleanup;
+
+  result = buffer_append_fmt(output, "committer %s <%s> %ld %c%02d%02d\n",
+                             author, email, (long)timestamp, sign, hours,
+                             minutes);
+  if (result != CGIT_OK) goto cleanup;
+
+  result = buffer_append_fmt(output, "\n%s\n", message);
+  if (result != CGIT_OK) goto cleanup;
+
+  return result;
+
+cleanup:
+  buffer_free(output);
+  return result;
+}
 
 static int cmp_entry(const void *a, const void *b) {
   return strcmp(((tree_entry_t *)a)->name, ((tree_entry_t *)b)->name);

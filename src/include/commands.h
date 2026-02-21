@@ -6,5 +6,6 @@ int handle_cat_file(int argc, char *argv[]);
 int handle_hash_object(int argc, char *argv[]);
 int handle_ls_tree(int argc, char *argv[]);
 int handle_write_tree(int argc, char *argv[]);
+int handle_commit_tree(int argc, char *argv[]);
 
 #endif
