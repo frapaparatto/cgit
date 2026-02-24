@@ -1,4 +1,4 @@
-# ADR-007: Extracting Header Parsing as a Pure Utility Function
+# 007: Extracting Header Parsing as a Pure Utility Function
 
 ## Context
 
