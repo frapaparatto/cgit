@@ -2,11 +2,7 @@
 
 A from-scratch reimplementation of git's plumbing commands in C. The goal is to understand how git actually works under the hood: how objects are hashed and compressed, how trees and commits are serialized, and why the format is designed the way it is.
 
-The codebase mirrors git's own layered structure: a dispatch table at the entry point, a command layer for argument validation, and a core layer that owns the object model. Each layer has a strict contract and sees only what it needs.
-
 ## Architecture
-
-The project is organized in three layers, each with a strict contract:
 
 ```
 src/
