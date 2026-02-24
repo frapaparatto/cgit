@@ -1,4 +1,4 @@
-## `git init`command
+# `git init`command
 `git init` creates the minimal filesystem structure of a Git repository so that Git can later store objects and knows, via HEAD, which reference to update when commits are created.
 
 Git repo is made of two things:
@@ -7,7 +7,7 @@ Git repo is made of two things:
 
 Usually the structure is `worktree/.git`.
 
-### HEAD
+## HEAD
 **HEAD** is a pointer that identifies the **current checkout target**.
 
 In normal operation, **HEAD points to a name (a branch reference)**, and **that branch points to the last commit**.
