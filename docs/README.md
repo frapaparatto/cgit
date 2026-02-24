@@ -8,16 +8,16 @@ This project was built with deliberate attention to engineering decisions. The d
 
 Start here to understand the system design:
 
-- **[Architecture Overview](architecture/overview.md)**: Layered structure, module map, data flow diagrams, conventions.
-- **[Decision Records](architecture/decisions/)**: Each significant design choice documented with context, rationale, and alternatives:
-  - [001 - Dispatch Table](architecture/decisions/001-dispatch-table.md): why data-driven dispatch over if/else chains
-  - [002 - Error Handling Strategy](architecture/decisions/002-error-handling-strategy.md): two-level error model with typed error codes
-  - [003 - Ownership Model](architecture/decisions/003-ownership-model.md): explicit resource lifecycle and the goto cleanup pattern
-  - [004 - Object Existence Check](architecture/decisions/004-object-existence.md): separating a fast path from a general-purpose function
-  - [005 - Tree Parsing in Core](architecture/decisions/005-parsing-tree.md): why parsing belongs in core, not in command handlers
-  - [006 - Write Idempotency](architecture/decisions/006-write-idempotency.md): performance-conscious design decisions
-  - [007 - Header Parsing Extraction](architecture/decisions/007-header-parsing-extraction.md): extracting a pure utility from mixed I/O code
-  - [008 - Buffer Append Pattern](architecture/decisions/008-buffer-append.md): growable buffer design and the bug that revealed it
+- **Architecture Overview**: Layered structure, module map, data flow diagrams, conventions.
+- **Decision Records**: Each significant design choice documented with context, rationale, and alternatives:
+  - 001 - Dispatch Table: why data-driven dispatch over if/else chains
+  - 002 - Error Handling Strategy: two-level error model with typed error codes
+  - 003 - Ownership Model: explicit resource lifecycle and the goto cleanup pattern
+  - 004 - Object Existence Check: separating a fast path from a general-purpose function
+  - 005 - Tree Parsing: why parsing belongs in core, not in command handlers
+  - 006 - Write Idempotency: performance-conscious design decisions
+  - 007 - Header Parsing Extraction: extracting a pure utility from mixed I/O code
+  - 008 - Buffer Append Pattern: growable buffer design and the bug that revealed it
 
 ## Development Approach
 
