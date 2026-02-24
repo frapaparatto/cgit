@@ -74,6 +74,7 @@ cgit_error_t decompress_data(const unsigned char *input, size_t input_len,
 
 cleanup:
   if (strm_initialized) inflateEnd(&strm);
+  free(output->data);
   return result;
 }
 

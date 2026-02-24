@@ -90,14 +90,13 @@ cgit_error_t build_commit_content(const char *tree_hash,
     if (result != CGIT_OK) goto cleanup;
   }
 
-  result = buffer_append_fmt(output, "author %s <%s> %ld %c%02d%02d\n",
-                             author, email, (long)timestamp, sign, hours,
-                             minutes);
+  result = buffer_append_fmt(output, "author %s <%s> %ld %c%02d%02d\n", author,
+                             email, (long)timestamp, sign, hours, minutes);
   if (result != CGIT_OK) goto cleanup;
 
-  result = buffer_append_fmt(output, "committer %s <%s> %ld %c%02d%02d\n",
-                             author, email, (long)timestamp, sign, hours,
-                             minutes);
+  result =
+      buffer_append_fmt(output, "committer %s <%s> %ld %c%02d%02d\n", author,
+                        email, (long)timestamp, sign, hours, minutes);
   if (result != CGIT_OK) goto cleanup;
 
   result = buffer_append_fmt(output, "\n%s\n", message);
@@ -301,6 +300,7 @@ cgit_error_t write_tree_recursive(const char *path, tree_entry_t **entries_out,
   *entries_out = entries;
   *count_out = count;
 
+  closedir(dir);
   return result;
 
 cleanup:

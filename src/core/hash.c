@@ -31,7 +31,8 @@ cgit_error_t compute_sha1(const unsigned char *header, size_t len,
   return CGIT_OK;
 }
 
-cgit_error_t hex_to_bytes_hash(const unsigned char *hex_hash, char *hash_out) {
+cgit_error_t hex_to_bytes_hash(const unsigned char *hex_hash,
+                               unsigned char *hash_out) {
   for (size_t j = 0; j < CGIT_HASH_RAW_LEN; j++) {
     unsigned int byte;
     sscanf((const char *)&hex_hash[j * 2], "%02x", &byte);

@@ -13,8 +13,8 @@ cgit_error_t build_object_path(const char *hash, char *path_out,
   char dir[CGIT_DIR_BUF_SIZE];
   char object[CGIT_OBJ_NAME_BUF_SIZE];
 
-  memcpy(dir, hash, 2);
-  memcpy(object, hash + 2, 38);
+  memcpy(dir, hash, CGIT_DIR_BUF_SIZE);
+  memcpy(object, hash + 2, CGIT_OBJ_NAME_BUF_SIZE);
 
   dir[CGIT_DIR_BUF_SIZE - 1] = '\0';
   object[CGIT_OBJ_NAME_BUF_SIZE - 1] = '\0';
