@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+
 set -euo pipefail
 
 CGIT="$(cd "$(dirname "${1:-./build/cgit}")" && pwd)/$(basename "${1:-./build/cgit}")"
